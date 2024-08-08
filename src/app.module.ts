@@ -5,6 +5,8 @@ import dbConfig from './Libs/persistence/db-config';
 import { FirebaseModule } from './Libs/firebase/firebase.module';
 import { UsersModule } from './modules/user/user.module';
 import { AuthModule } from './Libs/auth/auth.module';
+import { OtpModule } from './Libs/otp/otp.module';
+import { SendEmailModule } from './Libs/email/email.module';
 
 @Module({
   imports: [
@@ -14,8 +16,10 @@ import { AuthModule } from './Libs/auth/auth.module';
       isGlobal: true,
     }),
     FirebaseModule,
-    UsersModule,
     AuthModule,
+    UsersModule,
+    OtpModule,
+    SendEmailModule,
     PersistenceModule,
   ],
   controllers: [],
