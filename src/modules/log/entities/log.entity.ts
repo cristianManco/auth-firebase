@@ -13,6 +13,9 @@ export class Log extends Document {
   id_user: string;
 
   @Prop({ default: null })
+  accesstoken: string;
+
+  @Prop({ default: null })
   system_name: string;
 
   @Prop({ required: true })

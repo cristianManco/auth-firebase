@@ -11,7 +11,8 @@ import { LogModule } from './modules/log/log.module';
 import { LogIterceptor } from './modules/log/Interceptor/log.interceptor';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiKeyModule } from './modules/x-api-keys/api-key.module';
-import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
+// import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
+import { JwtAuthGuard } from './Libs/Guards/jwt-auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -37,7 +38,7 @@ import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
     },
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: JwtAuthGuard,
     },
   ],
 })

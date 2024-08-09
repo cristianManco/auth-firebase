@@ -27,12 +27,15 @@ export class AuthGuard implements CanActivate {
     const id_user = request.user?.id || 'undefined';
     const system_name = request.headers['system-name'] || 'undefined';
     const data = JSON.stringify(request.body) || null;
+    const authHeader = request.headers.authorization;
+    const accesstoken = authHeader.split(' ')[1];
 
     if (!apiKey) {
       await this.logsService.logRequest(
         ip,
         'undefined',
         id_user,
+        accesstoken,
         system_name,
         endpoint,
         method,
@@ -54,6 +57,7 @@ export class AuthGuard implements CanActivate {
           ip,
           apiKey,
           id_user,
+          accesstoken,
           system_name,
           endpoint,
           method,
@@ -74,6 +78,7 @@ export class AuthGuard implements CanActivate {
         ip,
         apiKey || 'undefined',
         id_user,
+        accesstoken,
         system_name,
         endpoint,
         method,
