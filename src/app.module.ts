@@ -7,6 +7,9 @@ import { UsersModule } from './modules/user/user.module';
 import { AuthModule } from './Libs/auth/auth.module';
 import { OtpModule } from './Libs/otp/otp.module';
 import { SendEmailModule } from './Libs/email/email.module';
+import { LogModule } from './modules/log/log.module';
+import { LogIterceptor } from './modules/log/Interceptor/log.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -20,9 +23,15 @@ import { SendEmailModule } from './Libs/email/email.module';
     UsersModule,
     OtpModule,
     SendEmailModule,
+    LogModule,
     PersistenceModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LogIterceptor,
+    },
+  ],
 })
 export class AppModule {}
