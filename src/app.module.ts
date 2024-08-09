@@ -9,7 +9,10 @@ import { OtpModule } from './Libs/otp/otp.module';
 import { SendEmailModule } from './Libs/email/email.module';
 import { LogModule } from './modules/log/log.module';
 import { LogIterceptor } from './modules/log/Interceptor/log.interceptor';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ApiKeyModule } from './modules/x-api-keys/api-key.module';
+// import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
+import { JwtAuthGuard } from './Libs/Guards/jwt-auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -23,6 +26,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     UsersModule,
     OtpModule,
     SendEmailModule,
+    ApiKeyModule,
     LogModule,
     PersistenceModule,
   ],
@@ -31,6 +35,10 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
     {
       provide: APP_INTERCEPTOR,
       useClass: LogIterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
     },
   ],
 })
