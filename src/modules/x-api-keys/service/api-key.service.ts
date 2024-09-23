@@ -16,7 +16,7 @@ export class ApiKeyService {
 
   async createApiKey(
     createApiKeyDto: CreateApiKeyDto,
-  ): Promise<{ key: string; isActive: boolean }> {
+  ): Promise<{ id: string; key: string; isActive: boolean }> {
     try {
       const key = await this.generateApiKey();
       if (!key) {
@@ -39,7 +39,7 @@ export class ApiKeyService {
         key: hashedKey,
       });
       await newApiKey.save();
-      return { key, isActive: newApiKey.isActive };
+      return { id: newApiKey.id, key, isActive: newApiKey.isActive };
     } catch (error) {
       this.logger.error('Error creating API key', error.stack);
       throw new HttpException('Error creating API key', HttpStatus.FORBIDDEN);

@@ -1,0 +1,4 @@
+export const ROLES = {
+  ADMIN_CENTINELA: 'ADMIN_CENTINELA',
+  BASIC: 'BASIC',
+};
