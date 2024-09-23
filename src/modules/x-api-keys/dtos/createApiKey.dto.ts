@@ -46,6 +46,15 @@ export class CreateApiKeyDto {
   description?: string;
 
   @ApiProperty({
+    description: 'roles of the API key',
+    example: 'API key for create roles admin-coworking',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  roles?: string[];
+
+  @ApiProperty({
     description: 'Last usage date of the API key',
     example: '2023-07-14T12:00:00.000Z',
     required: false,
