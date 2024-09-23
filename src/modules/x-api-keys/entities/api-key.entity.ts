@@ -14,6 +14,9 @@ export class ApiKey {
   @Prop({ default: null })
   description: string;
 
+  @Prop()
+  roles: string[];
+
   @Prop({ default: null })
   lastUsedAt: Date | null;
 

@@ -8,20 +8,27 @@ import { UtilsAuthModule } from './utils/utilsAuth.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/modules/user/entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
+import { WhiteListService } from './utils/services/whiteList.service';
+import { Whitelist, WhitelistSchema } from './entities/whiteList.entity';
+import { UsersModule } from 'src/modules/user/user.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([
+      { name: User.name, schema: UserSchema },
+      { name: Whitelist.name, schema: WhitelistSchema },
+    ]),
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
       signOptions: { expiresIn: jwtConstants.expires || '15m' },
     }),
     ConfigModule.forRoot(),
+    UsersModule,
     UtilsAuthModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  providers: [AuthService, WhiteListService, JwtStrategy],
+  exports: [AuthService, MongooseModule],
 })
 export class AuthModule {}
