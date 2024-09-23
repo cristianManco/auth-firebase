@@ -35,7 +35,7 @@ export class AuthService {
       const subJwt: Sub = {
         id: userRecord.uid,
         email: userRecord.email,
-        role: user.role,
+        roles: user.role,
       };
 
       const token: Tokens = await this.getTokensService.getTokens({
