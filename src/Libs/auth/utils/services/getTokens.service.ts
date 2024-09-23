@@ -1,8 +1,8 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtPayload } from '../../types/jwtPayload.type';
 import { Tokens } from '../../types/tokens.type';
-import { jwtConstants } from '../../constants/constant-jwt';
 import { SignTokenService } from './signToken.service';
+import { jwtConstants } from 'src/Libs/constants/constant-jwt';
 
 @Injectable()
 export class GetTokensService {

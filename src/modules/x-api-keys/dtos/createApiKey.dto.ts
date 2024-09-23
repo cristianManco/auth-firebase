@@ -47,7 +47,7 @@ export class CreateApiKeyDto {
 
   @ApiProperty({
     description: 'roles of the API key',
-    example: 'API key for create roles admin-coworking',
+    example: ['ROLES'],
     required: false,
   })
   @IsOptional()

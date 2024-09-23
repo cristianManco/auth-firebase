@@ -4,7 +4,7 @@ import { Whitelist, WhitelistDocument } from '../../entities/whiteList.entity';
 import { Tokens } from '../../types/tokens.type';
 import { InjectModel } from '@nestjs/mongoose';
 import { LogoutUserDto } from '../../dtos/logout.dto';
-import { WhitelistStatus } from '../../constants/whitelist-status.enum';
+import { WhitelistStatus } from 'src/Libs/constants/whitelist-status.enum';
 
 @Injectable()
 export class WhiteListService {
