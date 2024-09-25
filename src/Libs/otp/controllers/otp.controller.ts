@@ -1,10 +1,20 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { OtpService } from '../services/otp.service';
 import { CreateOtpDto } from '../dtos/create-otp.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { UpdateOtpDto } from '../dtos/update-otp.dto';
 
 @ApiTags('otp')
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'API key needed to access this endpoint',
+})
 @Controller('otp')
 export class OtpCOntroller {
   constructor(private readonly otpService: OtpService) {}

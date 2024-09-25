@@ -8,11 +8,14 @@ import { AuthModule } from './Libs/auth/auth.module';
 import { OtpModule } from './Libs/otp/otp.module';
 import { SendEmailModule } from './Libs/email/email.module';
 import { LogModule } from './modules/log/log.module';
-import { LogIterceptor } from './modules/log/Interceptor/log.interceptor';
+import { LogInterceptor } from './modules/log/Interceptor/log.interceptor';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiKeyModule } from './modules/x-api-keys/api-key.module';
-// import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
+import { AuthGuard } from './Libs/Guards/x-api-key/api-key.guard';
 import { JwtAuthGuard } from './Libs/Guards/jwt-auth/jwt-auth.guard';
+import { ScheduleModule } from '@nestjs/schedule';
+import { RolesModule } from './Libs/roles/roles.module';
+import { MoodleModule } from './modules/moodle/moodle.module';
 
 @Module({
   imports: [
@@ -21,24 +24,31 @@ import { JwtAuthGuard } from './Libs/Guards/jwt-auth/jwt-auth.guard';
       load: [dbConfig],
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     FirebaseModule,
     AuthModule,
-    UsersModule,
-    OtpModule,
-    SendEmailModule,
-    ApiKeyModule,
     LogModule,
+    UsersModule,
+    ApiKeyModule,
+    SendEmailModule,
+    OtpModule,
+    RolesModule,
+    MoodleModule,
     PersistenceModule,
   ],
   controllers: [],
   providers: [
     {
       provide: APP_INTERCEPTOR,
-      useClass: LogIterceptor,
+      useClass: LogInterceptor,
     },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
     },
   ],
 })

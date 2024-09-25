@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsEmail,
   IsNotEmpty,
   IsOptional,
@@ -75,12 +76,12 @@ export class CreateUserDto {
 
   @ApiProperty({
     description: 'Role of the user',
-    type: String,
-    required: false,
+    type: Array,
+    required: true,
   })
-  @IsString({ each: true })
-  @IsOptional()
-  role: string;
+  @IsArray()
+  @IsNotEmpty()
+  roles: [];
 
   @ApiProperty({
     description: 'Version of terms and conditions',

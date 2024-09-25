@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEnum } from 'class-validator';
+import { IsBoolean } from 'class-validator';
 import { Document } from 'mongoose';
-import { WhitelistStatus } from '../constants/whitelist-status.enum';
 
 export type WhitelistDocument = Whitelist & Document;
 
@@ -10,9 +9,9 @@ export class Whitelist {
   @Prop({ required: true })
   token: string;
 
-  @IsEnum(WhitelistStatus)
-  @Prop({ type: String, enum: WhitelistStatus, default: WhitelistStatus.ASSET })
-  status: WhitelistStatus;
+  @IsBoolean()
+  @Prop({ default: true })
+  status: boolean;
 
   @Prop({ default: Date.now })
   createdAt: Date;

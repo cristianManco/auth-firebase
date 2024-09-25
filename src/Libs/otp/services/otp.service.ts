@@ -5,7 +5,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Otp, OtpDocument } from '../entities/otp.entity';
 import { ValidateOtpService } from '../utils/services/validateOtp.service';
-import { User, UserDocument } from 'src/modules/user/entities/user.entity';
+import { User, UserDocument } from '../../../modules/user/entities/user.entity';
 import { EmailService } from 'src/Libs/email/services/email.service';
 
 @Injectable()

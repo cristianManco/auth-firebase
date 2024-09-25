@@ -44,7 +44,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error: message,
       });
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.NOT_IMPLEMENTED);
+      throw new HttpException(
+        `UPS..Error capturing exceptions:  ${error.message}`,
+        HttpStatus.NOT_IMPLEMENTED,
+      );
     }
   }
 }

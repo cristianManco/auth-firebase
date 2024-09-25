@@ -1,10 +1,14 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Model } from 'mongoose';
 import { Whitelist, WhitelistDocument } from '../../entities/whiteList.entity';
 import { Tokens } from '../../types/tokens.type';
 import { InjectModel } from '@nestjs/mongoose';
 import { LogoutUserDto } from '../../dtos/logout.dto';
-import { WhitelistStatus } from 'src/Libs/constants/whitelist-status.enum';
 
 @Injectable()
 export class WhiteListService {
@@ -17,7 +21,7 @@ export class WhiteListService {
     try {
       const whitelistEntry = await new this.whitelistModel({
         token: token.access_token,
-        status: WhitelistStatus.ASSET,
+        status: true,
       });
       await whitelistEntry.save();
     } catch (err) {
@@ -28,21 +32,24 @@ export class WhiteListService {
     }
   }
 
-  async whiteListChangeStatus({ token }: LogoutUserDto): Promise<string> {
+  async whiteListChangeStatus({ token }: LogoutUserDto): Promise<object> {
     try {
       const tokenExist = await this.whitelistModel.findOne({ token });
 
-      if (tokenExist.status === WhitelistStatus.IDLE)
-        throw new HttpException('This token is invalid', HttpStatus.NOT_FOUND);
+      if (!tokenExist.status)
+        throw new NotFoundException('This token is invalid');
 
       const jwtToken = await this.whitelistModel
-        .updateOne({ token }, { $set: { status: WhitelistStatus.IDLE } })
+        .updateOne({ token }, { $set: { status: false } })
         .exec();
 
       if (!jwtToken)
         throw new HttpException('Token not found', HttpStatus.NOT_FOUND);
 
-      return 'The change of the token was successful!';
+      return {
+        message: 'logout completed',
+        actions: 'Token status changed successfully',
+      };
     } catch (err) {
       throw new HttpException(
         `Ups... error: ${err}`,
@@ -55,7 +62,7 @@ export class WhiteListService {
     try {
       const isValid = await this.whitelistModel.findOne({ token }).exec();
 
-      if (!isValid) return false;
+      if (!isValid || !isValid.status) return false;
 
       return true;
     } catch (err) {

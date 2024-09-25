@@ -1,15 +1,29 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from '../services/auth.service';
 import { LoginUserDto } from '../dtos/login.dto';
 import { Tokens } from '../types/tokens.type';
 import { LogoutUserDto } from '../dtos/logout.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { ValidateTokenDto } from '../dtos/validate-token.dto';
+import { RefreshTokenService } from '../utils/services/refresh.service';
 
 @ApiTags('auth')
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'API key needed to access this endpoint',
+})
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly refreshTokenService: RefreshTokenService,
+  ) {}
 
   @ApiOperation({ summary: 'Log in for a user' })
   @ApiBody({
@@ -32,7 +46,10 @@ export class AuthController {
   async login(@Body() loginUserDto: LoginUserDto): Promise<Tokens> {
     const token = await this.authService.login(loginUserDto);
 
-    return { access_token: token.access_token };
+    return {
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
+    };
   }
 
   @ApiOperation({ summary: 'Log out for a user' })
@@ -50,7 +67,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 201, description: 'The logout token is invalidated.' })
   @Post('logout')
-  async logout(@Body() logoutUserDto: LogoutUserDto): Promise<string> {
+  async logout(@Body() logoutUserDto: LogoutUserDto): Promise<object> {
     return await this.authService.logout(logoutUserDto);
   }
 
@@ -72,5 +89,31 @@ export class AuthController {
     @Body() validateTokenDto: ValidateTokenDto,
   ): Promise<object> {
     return await this.authService.validateToken(validateTokenDto.token);
+  }
+
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tokens refreshed successfully.',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid refresh token.' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        refresh_token: {
+          type: 'string',
+          description: 'Refresh token for generating new access token',
+        },
+      },
+      required: ['refresh_token'],
+    },
+  })
+  @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
+  async refreshToken(
+    @Body('refresh_token') refresh_token: string,
+  ): Promise<Tokens> {
+    return await this.refreshTokenService.refreshTokens(refresh_token);
   }
 }

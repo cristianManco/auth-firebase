@@ -1,70 +1,66 @@
-import {
-  Injectable,
-  NotFoundException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import { User, UserDocument } from '../entities/user.entity';
 import * as admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
-import { CreateUserDto, UpdateUserDto, UpdateRoleDto } from '../dtos/exportDTO';
-import { WhiteListService } from 'src/Libs/auth/utils/services/whiteList.service';
-import { GetTokensService } from 'src/Libs/auth/utils/services/getTokens.service';
-import { Tokens } from 'src/Libs/auth/types/tokens.type';
-import { Sub } from 'src/Libs/auth/types/sub.type';
-import { UserType } from 'src/Libs/Enums/roles.enum';
+import { CreateUserDto, UpdateRoleDto, UpdateUserDto } from '../dtos/exportDTO';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private readonly whiteListService: WhiteListService,
-    private readonly getToken: GetTokensService,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async register(createUserDto: CreateUserDto): Promise<Tokens> {
-    try {
-      const { token, email, termsVersion, metadataTerms, role, ...userData } =
-        createUserDto;
+  async register(createUserDto: CreateUserDto): Promise<object> {
+    const { token, email, termsVersion, metadataTerms, roles, ...userData } =
+      createUserDto;
 
-      let userRecord;
-      let password;
+    let userRecord;
+    let password;
 
-      if (token) {
-        const decodedToken = await admin.auth().verifyIdToken(token);
-        userRecord = await admin.auth().getUser(decodedToken.uid);
-        if (!userRecord) {
-          throw new HttpException('Invalid token', HttpStatus.BAD_REQUEST);
-        }
-      } else if (email && password) {
-        await this.validateEmailForSignUp(email);
-        userRecord = await admin.auth().createUser({ email, password });
+    if (token) {
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      userRecord = await admin.auth().getUser(decodedToken.uid);
+      if (!userRecord) {
+        throw new HttpException('Invalid token', HttpStatus.BAD_REQUEST);
+      }
+    } else if (email && password) {
+      await this.validateEmailForSignUp(email);
+      userRecord = await admin.auth().createUser({ email, password });
 
-        if (!userRecord) {
-          throw new HttpException(
-            'Invalid email or password',
-            HttpStatus.BAD_REQUEST,
-          );
-        }
-      } else {
+      if (!userRecord) {
         throw new HttpException(
-          'Insufficient data for registration',
+          'Invalid email or password',
           HttpStatus.BAD_REQUEST,
         );
       }
+    } else {
+      throw new HttpException(
+        'Insufficient data for registration',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
 
-      let user = await this.userModel.findOne({ email: userRecord.email });
-      if (user)
-        throw new HttpException(
-          'User already exists! Try again',
-          HttpStatus.BAD_REQUEST,
-        );
+    let user = await this.userModel.findOne({ email: userRecord.email });
 
+    if (user && user.deletedAt) {
+      throw new HttpException(
+        'User account has been deleted! Please contact support for more information.',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    if (user) {
+      throw new HttpException(
+        'User already exists! Try again',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
       user = new this.userModel({
         id: uuidv4(),
         firebaseId: userRecord.uid,
+        name: userRecord.displayName || userData.name,
         email: userRecord.email,
         accessMethod: userRecord.providerData[0]?.providerId || 'password',
         metadata: JSON.stringify(userRecord.metadata),
@@ -72,26 +68,24 @@ export class UsersService {
         metadataTerms,
         ...userData,
         createdAt: new Date(),
-        role: role,
+        roles: roles,
       });
 
       await user.save();
 
-      const jwtPayload: Sub = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      };
-      const tokens = await this.getToken.getTokens({ sub: jwtPayload });
-
-      await this.whiteListService.whitelistJwt(tokens);
-
-      return tokens;
+      return { message: 'Successfully registered user!', id: user._id };
     } catch (error) {
-      throw new HttpException(
-        `Failed to register user! try again later with another firebaseId:  ${error.message}`,
-        HttpStatus.NOT_ACCEPTABLE,
-      );
+      if (error.code === 'auth/user-not-found') {
+        throw new HttpException(
+          'User not found in Firebase',
+          HttpStatus.NOT_FOUND,
+        );
+      } else {
+        throw new HttpException(
+          `Failed to register user! try again later with another firebaseId:  ${error.message}`,
+          HttpStatus.NOT_ACCEPTABLE,
+        );
+      }
     }
   }
 
@@ -116,14 +110,12 @@ export class UsersService {
     userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<User> {
+    const user = await this.userModel.findOne({ firebaseId: userId });
+    if (!user) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+
+    Object.assign(user, updateUserDto, { updatedAt: new Date() });
+    await user.save();
     try {
-      const user = await this.userModel.findById(userId);
-      if (!user)
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-
-      Object.assign(user, updateUserDto, { updatedAt: new Date() });
-      await user.save();
-
       await admin.auth().updateUser(userId, {
         email: updateUserDto.email,
         displayName: updateUserDto.name,
@@ -131,7 +123,7 @@ export class UsersService {
 
       return user;
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
 
@@ -144,7 +136,7 @@ export class UsersService {
       if (!user)
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
-      user.role = updateRoleDto.role as UserType;
+      user.roles = [updateRoleDto.roles[0]];
       await user.save();
 
       return user;
@@ -153,24 +145,29 @@ export class UsersService {
     }
   }
 
-  async removeUser(userId: string, deletedBy: string): Promise<void> {
+  async removeUser(userId: string): Promise<void> {
+    const user = await this.userModel.findOne({ firebaseId: userId });
+
+    if (!user || user.deletedAt) {
+      throw new HttpException(
+        'User not found or already deleted',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    user.deletedAt = new Date();
+    user.deletedBy = user.deletedBy;
+    await user.save();
+
     try {
-      const user = await this.userModel.findById(userId);
-      if (!user)
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-
-      user.deletedAt = new Date();
-      user.deletedBy = deletedBy;
-      await user.save();
-
       await admin.auth().deleteUser(userId);
     } catch (error) {
-      if (error instanceof NotFoundException) {
-        throw new HttpException(error.message, HttpStatus.NOT_FOUND);
+      if (error.code === 'auth/user-not-found') {
+        return;
       }
       throw new HttpException(
         'Error when trying to delete user',
-        HttpStatus.NOT_IMPLEMENTED,
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -181,15 +178,14 @@ export class UsersService {
     page: number = 1,
     limit: number = 10,
   ): Promise<any> {
+    const query = { deletedAt: null }; // Exclude soft-deleted users
+
+    if (filters.name) query['name'] = { $regex: filters.name, $options: 'i' };
+    if (filters.email)
+      query['email'] = { $regex: filters.email, $options: 'i' };
+
+    const sortOption = sort === 'asc' ? 'createdAt' : '-createdAt';
     try {
-      const query = { deletedAt: null }; // Exclude soft-deleted users
-
-      if (filters.name) query['name'] = { $regex: filters.name, $options: 'i' };
-      if (filters.email)
-        query['email'] = { $regex: filters.email, $options: 'i' };
-
-      const sortOption = sort === 'asc' ? 'createdAt' : '-createdAt';
-
       const users = await this.userModel
         .find(query)
         .sort(sortOption)
@@ -221,12 +217,25 @@ export class UsersService {
 
   async findOne(id: string): Promise<User> {
     try {
-      const user = await this.userModel.findById(id);
-      if (!user)
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
-      return user;
+      let user: User;
+      if (isValidObjectId(id)) {
+        user = await this.userModel.findOne({ _id: id });
+        if (!user) {
+          throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+        return user;
+      } else {
+        user = await this.userModel.findOne({ id: id });
+        if (!user) {
+          throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        }
+        return user;
+      }
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.FORBIDDEN);
+      if (error.kind === 'ObjectId') {
+        throw new HttpException('Invalid ID format', HttpStatus.BAD_REQUEST);
+      }
+      throw new HttpException(error.message, HttpStatus.NOT_FOUND);
     }
   }
 }

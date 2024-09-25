@@ -4,14 +4,13 @@ import {
   Body,
   Put,
   Param,
-  Req,
+  UseGuards,
   Delete,
   Get,
   Query,
   Patch,
 } from '@nestjs/common';
 import { UsersService } from '../service/user.service';
-import { CreateUserDto, UpdateUserDto, UpdateRoleDto } from '../dtos/exportDTO';
 import {
   ApiOperation,
   ApiResponse,
@@ -19,12 +18,19 @@ import {
   ApiBody,
   ApiQuery,
   ApiParam,
+  ApiBearerAuth,
+  ApiHeader,
 } from '@nestjs/swagger';
-import { User } from '../entities/user.entity';
 import { Public } from 'src/Libs/decorators/public.decorator';
-import { Tokens } from 'src/Libs/auth/types/tokens.type';
+import { CreateUserDto } from '../dtos/createUser.dto';
+import { JwtAuthGuard } from 'src/Libs/Guards/jwt-auth/jwt-auth.guard';
 import { Roles } from 'src/Libs/decorators/roles.decorator';
+import { UpdateRoleDto } from '../dtos/updateRole.dto';
+import { User } from '../entities/user.entity';
+import { RolesGuard } from 'src/Libs/Guards/guard-roles/roles.guard';
+import { UpdateUserDto } from '../dtos/updateUser.dto';
 
+@ApiBearerAuth()
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
@@ -49,6 +55,7 @@ export class UsersController {
           typeDocument: 'passport',
           termsVersion: '1.0',
           metadataTerms: '1.0',
+          roles: ['ROLES'],
         },
       },
     },
@@ -58,11 +65,12 @@ export class UsersController {
     description: 'The user has been successfully created.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  async register(@Body() createUserDto: CreateUserDto): Promise<Tokens> {
+  async register(@Body() createUserDto: CreateUserDto): Promise<object> {
     return await this.usersService.register(createUserDto);
   }
 
   @Get('all')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get all users' })
   @ApiQuery({
     name: 'name',
@@ -97,6 +105,10 @@ export class UsersController {
     type: Number,
     example: 10,
   })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API key needed to access this endpoint',
+  })
   @ApiResponse({ status: 200, description: 'Return all users.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   async findAll(@Query() query: any): Promise<any> {
@@ -105,8 +117,13 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get a user by id' })
   @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API key needed to access this endpoint',
+  })
   @ApiResponse({ status: 200, description: 'Return the user.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 404, description: 'Not Found.' })
@@ -114,10 +131,15 @@ export class UsersController {
     return await this.usersService.findOne(id);
   }
 
-  @Roles('super_admin')
+  @Roles('ADMIN_CENTINELA')
+  @UseGuards(JwtAuthGuard)
   @Patch('role/:_id')
   @ApiOperation({ summary: 'Update a user role' })
   @ApiParam({ name: '_id', description: 'User ID' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API key needed to access this endpoint',
+  })
   @ApiBody({
     description: 'User role update data',
     type: UpdateRoleDto,
@@ -125,7 +147,7 @@ export class UsersController {
       role: {
         summary: 'An example of updating a user role',
         value: {
-          role: 'admin',
+          roles: ['role_example'],
         },
       },
     },
@@ -144,8 +166,14 @@ export class UsersController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
+  @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update a user' })
   @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API key needed to access this endpoint',
+  })
   @ApiBody({
     description: 'User update data',
     type: UpdateUserDto,
@@ -170,8 +198,8 @@ export class UsersController {
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 404, description: 'Not Found.' })
-  async updateUser(
-    @Param('_id') id: string,
+  async updateUsers(
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<any> {
     await this.usersService.updateUser(id, updateUserDto);
@@ -179,16 +207,21 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Delete a user' })
   @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'API key needed to access this endpoint',
+  })
   @ApiResponse({
     status: 200,
     description: 'The user has been successfully deleted.',
   })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
   @ApiResponse({ status: 404, description: 'Not Found.' })
-  async deleteUser(@Param('id') id: string, @Req() req: any): Promise<any> {
-    await this.usersService.removeUser(id, req.user.id);
+  async deleteUser(@Param('id') id: string): Promise<any> {
+    await this.usersService.removeUser(id);
 
     return { message: 'User deleted successfully' };
   }

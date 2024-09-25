@@ -8,6 +8,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MoodleSyncService } from './cronJobs/cronJobs.service';
 import { AuthModule } from 'src/Libs/auth/auth.module';
 import { UtilsAuthModule } from 'src/Libs/auth/utils/utilsAuth.module';
+import { UsersModule } from '../user/user.module';
+import { LogModule } from '../log/log.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { UtilsAuthModule } from 'src/Libs/auth/utils/utilsAuth.module';
     AuthModule,
     UtilsAuthModule,
     HttpModule,
+    UsersModule,
+    LogModule,
   ],
   providers: [MoodleSyncService, MoodleService],
   controllers: [MoodleController],

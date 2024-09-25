@@ -33,9 +33,9 @@ export class AuthService {
         throw new HttpException('User not found', HttpStatus.NOT_FOUND);
 
       const subJwt: Sub = {
-        id: userRecord.uid,
+        id: user.id,
         email: userRecord.email,
-        roles: user.role,
+        roles: user.roles,
       };
 
       const token: Tokens = await this.getTokensService.getTokens({
@@ -53,7 +53,7 @@ export class AuthService {
     }
   }
 
-  async logout(jwtToken: LogoutUserDto): Promise<string> {
+  async logout(jwtToken: LogoutUserDto): Promise<object> {
     try {
       return await this.whiteListService.whiteListChangeStatus(jwtToken);
     } catch (err) {
@@ -66,11 +66,13 @@ export class AuthService {
 
   async validateToken(token: string): Promise<object> {
     try {
-      return await this.validateTokenService.validateTokens(token);
+      const secret = process.env.JWT_SECRET || process.env.JWT_REFRESH_SECRET;
+
+      return await this.validateTokenService.validateTokens(token, secret);
     } catch (err) {
       throw new HttpException(
         `Ups... error: ${err}`,
-        HttpStatus.NOT_IMPLEMENTED,
+        HttpStatus.NOT_ACCEPTABLE,
       );
     }
   }
