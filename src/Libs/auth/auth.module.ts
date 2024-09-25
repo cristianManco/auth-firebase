@@ -1,34 +1,29 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthService } from './services/auth.service';
-import { JwtStrategy } from './strategies/at.strategy';
-import { AuthController } from './controllers/auth.controller';
+import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from 'src/modules/user/entities/user.entity';
-import { ConfigModule } from '@nestjs/config';
-import { WhiteListService } from './utils/services/whiteList.service';
-import { Whitelist, WhitelistSchema } from './entities/whiteList.entity';
-import { UsersModule } from 'src/modules/user/user.module';
 import { jwtConstants } from '../constants/constant-jwt';
 import { UtilsAuthModule } from './utils/utilsAuth.module';
+import { ApiKeyModule } from 'src/modules/x-api-keys/api-key.module';
+import { AuthController } from './controllers/auth.controller';
+import { JwtStrategy } from './strategies/at.strategy';
+import { AuthService } from './services/auth.service';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Whitelist.name, schema: WhitelistSchema },
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
       signOptions: { expiresIn: jwtConstants.expires || '15m' },
     }),
     ConfigModule.forRoot(),
-    UsersModule,
     UtilsAuthModule,
+    ApiKeyModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, WhiteListService, JwtStrategy],
-  exports: [AuthService, MongooseModule],
+  providers: [AuthService, JwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

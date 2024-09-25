@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsNumber,
   IsArray,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class CreateApiKeyDto {
@@ -15,6 +16,7 @@ export class CreateApiKeyDto {
     example: 'System X',
   })
   @IsString()
+  @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase())
   system_name: string;
 
@@ -51,7 +53,7 @@ export class CreateApiKeyDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsArray()
   roles?: string[];
 
   @ApiProperty({
@@ -68,7 +70,7 @@ export class CreateApiKeyDto {
     example: 1000,
     required: false,
   })
-  @IsOptional()
+  @IsNotEmpty()
   @IsNumber()
   maxUsage?: number | null;
 

@@ -1,7 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEnum, IsOptional } from 'class-validator';
 import { Document } from 'mongoose';
-import { UserType } from 'src/Libs/Enums/roles.enum';
 import { v4 as uuidv4 } from 'uuid';
 
 export type UserDocument = User & Document;
@@ -38,10 +36,8 @@ export class User {
   @Prop({ required: true })
   metadataTerms: string;
 
-  @IsOptional()
-  @IsEnum(UserType)
-  @Prop({ type: String, enum: UserType, default: UserType.USER })
-  role: UserType;
+  @Prop({ type: [String], required: true })
+  roles: string[];
 
   @Prop({ default: Date.now })
   createdAt: Date;
@@ -55,7 +51,7 @@ export class User {
   @Prop()
   updatedBy: string;
 
-  @Prop()
+  @Prop({ default: null })
   deletedAt: Date;
 
   @Prop()

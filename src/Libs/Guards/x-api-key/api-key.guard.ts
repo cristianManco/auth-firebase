@@ -19,31 +19,40 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const apiKey = request.headers['x-api-key'];
-    const endpoint = request.url;
+    const request = await context.switchToHttp().getRequest();
+
+    const ip = await request.ip;
+    const apiKey = await request.headers['x-api-key'];
+    const authHeader = await request.headers.authorization;
+    let accessToken = 'undefined';
+    const system_name = (await request.headers['system-name']) || 'undefined';
+    const id_user = (await request.user?.id) || 'undefined';
+    const endpoint = await request.url;
     const method = request.method;
-    const ip = request.ip;
-    const id_user = request.user?.id || 'undefined';
-    const system_name = request.headers['system-name'] || 'undefined';
-    const data = JSON.stringify(request.body) || null;
-    const authHeader = request.headers.authorization;
-    const accesstoken = authHeader.split(' ')[1];
+    const userAgent = (await request.headers['user-agent']) || 'undefined';
+    const host = (await request.headers['host']) || 'undefined';
+    const data = (await JSON.stringify(request.body)) || null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = await authHeader.split(' ')[1];
+    }
 
     if (!apiKey) {
       await this.logsService.logRequest(
         ip,
         'undefined',
-        id_user,
-        accesstoken,
+        accessToken,
         system_name,
+        id_user,
         endpoint,
         method,
-        'Unauthorized Access',
+        'Unauthorized Access', // action
+        userAgent,
+        host,
+        401, // responseStatus
+        0, // responseTime
+        'API key is missing', // details
         data,
-        401,
-        0,
-        'API key is missing',
       );
       this.logger.warn('API key is missing');
       throw new HttpException('API key is missing', HttpStatus.UNAUTHORIZED);
@@ -56,16 +65,18 @@ export class AuthGuard implements CanActivate {
         await this.logsService.logRequest(
           ip,
           apiKey,
-          id_user,
-          accesstoken,
+          accessToken,
           system_name,
+          id_user,
           endpoint,
           method,
-          'Unauthorized Access',
+          'Unauthorized Access', // action
+          userAgent,
+          host,
+          401, // responseStatus
+          0, // responseTime
+          'Invalid API key', // details
           data,
-          401,
-          0,
-          'Invalid API key',
         );
         this.logger.warn('Invalid API key');
         throw new HttpException('Invalid API key', HttpStatus.UNAUTHORIZED);
@@ -77,16 +88,18 @@ export class AuthGuard implements CanActivate {
       await this.logsService.logRequest(
         ip,
         apiKey || 'undefined',
-        id_user,
-        accesstoken,
+        accessToken,
         system_name,
+        id_user,
         endpoint,
         method,
-        'Error during API key validation',
+        'Error during API key validation', // action
+        userAgent,
+        host,
+        500, // responseStatus
+        0, // responseTime
+        `Error validating API key: ${error.message}`, // details
         data,
-        500,
-        0,
-        `Error validating API key: ${error.message}`,
       );
       this.logger.error('Error validating API key', error.stack);
       throw new HttpException(

@@ -1,9 +1,19 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { EmailService } from '../services/email.service';
 import { SendEmailDto } from '../dtos/send-email.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('email')
+@ApiHeader({
+  name: 'x-api-key',
+  description: 'API key needed to access this endpoint',
+})
 @Controller('email')
 export class EmailController {
   constructor(private readonly emailService: EmailService) {}

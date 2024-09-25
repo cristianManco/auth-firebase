@@ -27,7 +27,7 @@ export class GenerateOtpCodeService {
     } catch (err) {
       throw new HttpException(
         `Ups... error: ${err}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        HttpStatus.NOT_IMPLEMENTED,
       );
     }
   }

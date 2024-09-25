@@ -3,12 +3,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersService } from './service/user.service';
 import { UsersController } from './controller/user.controller';
 import { User, UserSchema } from './entities/user.entity';
-import { FirebaseModule } from 'src/Libs/firebase/firebase.module';
-import { UtilsAuthModule } from 'src/Libs/auth/utils/utilsAuth.module';
 import {
   Whitelist,
   WhitelistSchema,
 } from 'src/Libs/auth/entities/whiteList.entity';
+import { FirebaseModule } from 'src/Libs/firebase/firebase.module';
+import { UtilsAuthModule } from 'src/Libs/auth/utils/utilsAuth.module';
+import { ApiKeyModule } from '../x-api-keys/api-key.module';
+import { LogModule } from '../log/log.module';
 
 @Module({
   imports: [
@@ -18,9 +20,10 @@ import {
     ]),
     FirebaseModule,
     UtilsAuthModule,
+    ApiKeyModule,
+    LogModule,
   ],
   providers: [UsersService],
   controllers: [UsersController],
-  exports: [UsersService],
 })
 export class UsersModule {}

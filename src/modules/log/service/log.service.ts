@@ -10,35 +10,39 @@ export class LogService {
   async logRequest(
     ip: string,
     apiKey: string,
-    id_user: string,
     accesstoken: string,
+    id_user: string,
     system_name: string,
     endpoint: string,
     method: string,
     action: string,
-    data: string,
+    userAgent?: string,
+    host?: string,
     responseStatus?: number,
     responseTime?: number,
     details?: string,
+    data?: string,
   ): Promise<void> {
     try {
       const log = await new this.logModel({
         ip,
         apiKey,
-        id_user,
         accesstoken,
+        id_user,
         system_name,
         endpoint,
         method,
         action,
-        data,
+        userAgent,
+        host,
         responseStatus,
         responseTime,
         details,
+        data,
       });
       await log.save();
     } catch (error) {
-      console.error('Error logging request:', error);
+      throw new HttpException('Error logging request:', HttpStatus.FORBIDDEN);
     }
   }
 

@@ -9,11 +9,11 @@ export class Log extends Document {
   @Prop({ required: true })
   apiKey: string;
 
-  @Prop()
-  id_user: string;
-
   @Prop({ default: null })
   accesstoken: string;
+
+  @Prop()
+  id_user: string;
 
   @Prop({ default: null })
   system_name: string;
@@ -27,8 +27,11 @@ export class Log extends Document {
   @Prop({ required: true })
   action: string;
 
-  @Prop({ default: null })
-  data: string;
+  @Prop({ default: undefined })
+  userAgent?: string;
+
+  @Prop({ default: undefined })
+  host?: string;
 
   @Prop({ required: true })
   responseStatus: number;
@@ -38,6 +41,9 @@ export class Log extends Document {
 
   @Prop({ default: null })
   details?: string;
+
+  @Prop({ default: null })
+  data: string;
 
   @Prop({ default: new Date() })
   createdAt?: Date;

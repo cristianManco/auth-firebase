@@ -5,5 +5,5 @@ export class UpdateRoleDto {
     description: 'New role of the user',
     type: String,
   })
-  role: string;
+  roles: string;
 }

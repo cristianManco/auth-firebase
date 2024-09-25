@@ -38,14 +38,39 @@ export class ApiKeyController {
     description: 'API key needed to access this endpoint',
   })
   @ApiOperation({ summary: 'Create a new API key' })
-  @ApiBody({ type: CreateApiKeyDto })
+  @ApiBody({
+    type: CreateApiKeyDto,
+    examples: {
+      default: {
+        summary: 'Minimal API Key Creation Example',
+        description:
+          'An example with only the required fields for creating an API key',
+        value: {
+          system_name: 'System X',
+          maxUsage: 100000,
+        },
+      },
+      x_api_key: {
+        summary: 'Avanced API Key Creation example',
+        value: {
+          system_name: 'System Y',
+          description: 'API key for accessing System Y services',
+          roles: ['ADMIN_CENTINELA', 'USER_BASIC'],
+          maxUsage: 100000,
+          allowedIps: ['192.168.0.1', '10.0.0.0/8'],
+          permissions: ['READ', 'WRITE', 'CREATE'],
+          expiration: new Date(Date.now() + 3600000), // 1 hour
+        },
+      },
+    },
+  })
   @ApiResponse({
     status: 201,
     description: 'The API key has been successfully created.',
   })
   @ApiBadRequestResponse({ description: 'Invalid data provided.' })
   @ApiInternalServerErrorResponse({ description: 'Internal server error.' })
-  async create(@Body() createApiKeyDto: CreateApiKeyDto) {
+  async createKey(@Body() createApiKeyDto: CreateApiKeyDto) {
     try {
       return await this.apiKeyService.createApiKey(createApiKeyDto);
     } catch (error) {

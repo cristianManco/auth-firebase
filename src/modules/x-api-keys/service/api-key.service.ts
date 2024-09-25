@@ -14,11 +14,10 @@ export class ApiKeyService {
     @InjectModel(ApiKey.name) private apiKeyModel: Model<ApiKeyDocument>,
   ) {}
 
-  async createApiKey(
-    createApiKeyDto: CreateApiKeyDto,
-  ): Promise<{ id: string; key: string; isActive: boolean }> {
+  async createApiKey(createApiKeyDto: CreateApiKeyDto): Promise<object> {
     try {
       const key = await this.generateApiKey();
+
       if (!key) {
         this.logger.error('Error generating API key');
         throw new HttpException(
@@ -27,6 +26,7 @@ export class ApiKeyService {
         );
       }
       const hashedKey = await bcrypt.hash(key, 10);
+
       if (!hashedKey) {
         this.logger.error('Error hashing API key');
         throw new HttpException(
@@ -38,8 +38,10 @@ export class ApiKeyService {
         ...createApiKeyDto,
         key: hashedKey,
       });
+
       await newApiKey.save();
-      return { id: newApiKey.id, key, isActive: newApiKey.isActive };
+
+      return { id: newApiKey._id, key, isActive: newApiKey.isActive };
     } catch (error) {
       this.logger.error('Error creating API key', error.stack);
       throw new HttpException('Error creating API key', HttpStatus.FORBIDDEN);
@@ -158,7 +160,7 @@ export class ApiKeyService {
     }
   }
 
-  private async updateLastUsed(apiKeyId: string): Promise<void> {
+  public async updateLastUsed(apiKeyId: string): Promise<void> {
     try {
       await this.apiKeyModel
         .findOneAndUpdate({ _id: apiKeyId }, { lastUsedAt: new Date() })
@@ -177,11 +179,16 @@ export class ApiKeyService {
 
   private async generateApiKey(): Promise<string> {
     try {
-      return await [...Array(30)]
+      const apiKey = [...Array(30)]
         .map(() => ((Math.random() * 36) | 0).toString(36))
         .join('');
+
+      return apiKey;
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.NOT_IMPLEMENTED);
+      throw new HttpException(
+        `Error during the generation of x-api-key: ${error.message}`,
+        HttpStatus.NOT_IMPLEMENTED,
+      );
     }
   }
 }
