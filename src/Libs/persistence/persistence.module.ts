@@ -11,7 +11,7 @@ import dbConfig from './db-config';
         const { db, env } = configService;
         const uriDb =
           env === 'local'
-            ? `${db.connection}${db.host_local}${db.name_local}`
+            ? `mongodb+srv://${db.user}:${db.password}${db.host_remote}/${db.name_remote}?retryWrites=true&w=majority`
             : `mongodb+srv://${db.user}:${db.password}${db.host_remote}/${db.name_remote}?retryWrites=true&w=majority`;
         return { uri: uriDb };
       },
